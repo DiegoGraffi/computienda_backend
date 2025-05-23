@@ -3,3 +3,4 @@ gunicorn
 pandas
 openpyxl
 flask-cors
+xlrd>=2.0.1

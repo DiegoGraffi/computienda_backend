@@ -2,10 +2,16 @@ from flask import Flask, request, send_file
 from flask_cors import CORS
 import pandas as pd
 from io import BytesIO
-import os
 
 app = Flask(__name__)
-CORS(app)  # Habilita peticiones desde tu frontend
+CORS(app)
+
+def leer_excel(archivo):
+    filename = archivo.filename.lower()
+    if filename.endswith(".xls"):
+        return pd.read_excel(archivo, engine="xlrd")
+    else:
+        return pd.read_excel(archivo, engine="openpyxl")
 
 @app.route("/procesar", methods=["POST"])
 def procesar():
@@ -16,8 +22,8 @@ def procesar():
     if not archivo_real or not archivo_ecommerce:
         return {"error": "Faltan archivos"}, 400
 
-    stock_real = pd.read_excel(archivo_real)
-    stock_ecommerce = pd.read_excel(archivo_ecommerce)
+    stock_real = leer_excel(archivo_real)
+    stock_ecommerce = leer_excel(archivo_ecommerce)
 
     # Limpieza y merge
     stock_real.columns = stock_real.columns.str.strip()
