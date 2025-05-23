@@ -1,0 +1,53 @@
+from flask import Flask, request, send_file
+from flask_cors import CORS
+import pandas as pd
+from io import BytesIO
+import os
+
+app = Flask(__name__)
+CORS(app)  # Habilita peticiones desde tu frontend
+
+@app.route("/procesar", methods=["POST"])
+def procesar():
+    files = request.files
+    archivo_real = files.get("stock_real")
+    archivo_ecommerce = files.get("stock_ecommerce")
+
+    if not archivo_real or not archivo_ecommerce:
+        return {"error": "Faltan archivos"}, 400
+
+    stock_real = pd.read_excel(archivo_real)
+    stock_ecommerce = pd.read_excel(archivo_ecommerce)
+
+    # Limpieza y merge
+    stock_real.columns = stock_real.columns.str.strip()
+    stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
+    stock_real = stock_real.rename(columns={'Codigo Interno': 'Codigo'})
+    stock_ecommerce = stock_ecommerce.rename(columns={'Art.': 'Codigo'})
+
+    merged = pd.merge(
+        stock_ecommerce,
+        stock_real[['Codigo', 'Stock']],
+        on='Codigo',
+        how='left'
+    )
+
+    filtrado = merged[(merged['Stock Web'] != merged['Stock']) & (~merged['Stock'].isna())].copy()
+    filtrado['Stock Web'] = filtrado['Stock'].astype(int)
+
+    resultado = filtrado[['ID', 'Codigo', 'Stock Web']].rename(columns={'Codigo': 'Art.'})
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        resultado.to_excel(writer, index=False, sheet_name='Actualización')
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="stock_actualizado.xlsx"
+    )
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
