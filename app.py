@@ -3,9 +3,14 @@ from flask_cors import CORS
 import pandas as pd
 import tempfile
 import os
+import xlwt
 
 app = Flask(__name__)
 CORS(app)
+
+
+print("xlwt está instalado correctamente.")
+
 
 def leer_excel(archivo):
     filename = archivo.filename.lower()
