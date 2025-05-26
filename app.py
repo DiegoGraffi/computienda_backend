@@ -40,10 +40,20 @@ def procesar():
             suffixes=('', '_nuevo')
         )
 
+        merged['Stock Web_orig'] = merged['Stock Web']
+        merged['$ web_orig'] = merged['$ web']
+
         merged['Stock Web'] = merged['Stock Web_nuevo'].combine_first(merged['Stock Web'])
         merged['$ web'] = merged['$ web_nuevo'].combine_first(merged['$ web'])
 
-        merged = merged.drop(columns=['Stock Web_nuevo', '$ web_nuevo'])
+        modificados = merged[
+            (merged['Stock Web'] != merged['Stock Web_orig']) |
+            (merged['$ web'] != merged['$ web_orig'])
+        ].copy()
+
+        modificados = modificados.drop(columns=[
+            'Stock Web_nuevo', '$ web_nuevo', 'Stock Web_orig', '$ web_orig'
+        ])
 
         columnas_finales = [
             'ID', 'Art.', 'Nombre', 'Stock Local', 'Stock Web',
@@ -52,7 +62,7 @@ def procesar():
             'Estado Web', 'IVA', 'Imp. int.'
         ]
 
-        resultado = merged[columnas_finales]
+        resultado = modificados[columnas_finales]
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
             resultado.to_excel(tmp.name, index=False, sheet_name='Actualización', engine='xlwt')
