@@ -3,13 +3,9 @@ from flask_cors import CORS
 import pandas as pd
 import tempfile
 import os
-import xlwt
 
 app = Flask(__name__)
 CORS(app)
-
-
-print("xlwt está instalado correctamente.")
 
 
 def leer_excel(archivo):
@@ -18,6 +14,7 @@ def leer_excel(archivo):
         return pd.read_excel(archivo, engine="xlrd")
     else:
         return pd.read_excel(archivo, engine="openpyxl")
+
 
 @app.route("/procesar", methods=["POST"])
 def procesar():
@@ -35,23 +32,32 @@ def procesar():
         stock_real.columns = stock_real.columns.str.strip()
         stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
 
-        stock_real = stock_real.rename(columns={'Codigo Interno': 'Codigo'})
+        stock_real = stock_real.rename(columns={'Codigo Interno': 'Codigo', 'Art.': 'Codigo'})
         stock_ecommerce = stock_ecommerce.rename(columns={'Art.': 'Codigo'})
+
+        stock_real = stock_real[['Codigo', 'Stock', '$ web']]
 
         merged = pd.merge(
             stock_ecommerce,
-            stock_real[['Codigo', 'Stock']],
+            stock_real,
             on='Codigo',
-            how='left'
+            how='left',
+            suffixes=('', '_nuevo')
         )
 
-        filtrado = merged[
-            (merged['Stock Web'] != merged['Stock']) & (~merged['Stock'].isna())
-        ].copy()
+        merged['Stock Web'] = merged['Stock'].combine_first(merged['Stock Web'])
+        merged['$ web'] = merged['$ web_nuevo'].combine_first(merged['$ web'])
 
-        filtrado['Stock Web'] = filtrado['Stock'].astype(int)
+        merged = merged.rename(columns={'Codigo': 'Art.'})
 
-        resultado = filtrado[['ID', 'Codigo', 'Stock Web']].rename(columns={'Codigo': 'Art.'})
+        columnas_finales = [
+            'ID', 'Art.', 'Nombre', 'Stock Local', 'Stock Web',
+            '$ ML', '$ web', '$ FT', 'U$S', 'Categoria', 'Marca',
+            'Dimensiones', 'Tags', 'GTIN', 'Proveedor', 'Condicion',
+            'Estado Web', 'IA', 'Imp. int.'
+        ]
+
+        resultado = merged[columnas_finales]
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
             resultado.to_excel(tmp.name, index=False, sheet_name='Actualización', engine='xlwt')
@@ -65,6 +71,7 @@ def procesar():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
