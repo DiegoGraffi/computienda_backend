@@ -1,8 +1,9 @@
 Flask
 gunicorn
-pandas==1.5.3
 openpyxl
 flask-cors
 xlrd>=2.0.1
 xlsxwriter
+pandas==1.3.5
+numpy==1.21.6
 xlwt==1.3.0
