@@ -7,14 +7,12 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-
 def leer_excel(archivo):
     filename = archivo.filename.lower()
     if filename.endswith(".xls"):
         return pd.read_excel(archivo, engine="xlrd")
     else:
         return pd.read_excel(archivo, engine="openpyxl")
-
 
 @app.route("/procesar", methods=["POST"])
 def procesar():
@@ -32,23 +30,20 @@ def procesar():
         stock_real.columns = stock_real.columns.str.strip()
         stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
 
-        stock_real = stock_real.rename(columns={'Codigo Interno': 'Codigo', 'Art.': 'Codigo'})
-        stock_ecommerce = stock_ecommerce.rename(columns={'Art.': 'Codigo'})
-
-        stock_real = stock_real[['Codigo', 'Stock', '$ web']]
+        stock_real_reducido = stock_real[['Art.', 'Stock Web', '$ web']]
 
         merged = pd.merge(
             stock_ecommerce,
-            stock_real,
-            on='Codigo',
+            stock_real_reducido,
+            on='Art.',
             how='left',
             suffixes=('', '_nuevo')
         )
 
-        merged['Stock Web'] = merged['Stock'].combine_first(merged['Stock Web'])
+        merged['Stock Web'] = merged['Stock Web_nuevo'].combine_first(merged['Stock Web'])
         merged['$ web'] = merged['$ web_nuevo'].combine_first(merged['$ web'])
 
-        merged = merged.rename(columns={'Codigo': 'Art.'})
+        merged = merged.drop(columns=['Stock Web_nuevo', '$ web_nuevo'])
 
         columnas_finales = [
             'ID', 'Art.', 'Nombre', 'Stock Local', 'Stock Web',
@@ -71,7 +66,6 @@ def procesar():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
