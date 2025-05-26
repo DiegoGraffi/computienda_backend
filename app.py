@@ -54,7 +54,7 @@ def procesar():
             'ID', 'Art.', 'Nombre', 'Stock Local', 'Stock Web',
             '$ ML', '$ web', '$ FT', 'U$S', 'Categoria', 'Marca',
             'Dimensiones', 'Tags', 'GTIN', 'Proveedor', 'Condicion',
-            'Estado Web', 'IA', 'Imp. int.'
+            'Estado Web', 'IVA', 'Imp. int.'
         ]
 
         resultado = merged[columnas_finales]
