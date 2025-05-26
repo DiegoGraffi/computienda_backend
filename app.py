@@ -25,7 +25,6 @@ def procesar():
     stock_real = leer_excel(archivo_real)
     stock_ecommerce = leer_excel(archivo_ecommerce)
 
-    # Limpieza y merge
     stock_real.columns = stock_real.columns.str.strip()
     stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
     stock_real = stock_real.rename(columns={'Codigo Interno': 'Codigo'})
@@ -44,15 +43,15 @@ def procesar():
     resultado = filtrado[['ID', 'Codigo', 'Stock Web']].rename(columns={'Codigo': 'Art.'})
 
     output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(output, engine='xlwt') as writer:
         resultado.to_excel(writer, index=False, sheet_name='Actualización')
     output.seek(0)
 
     return send_file(
         output,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        mimetype="application/vnd.ms-excel",  
         as_attachment=True,
-        download_name="stock_actualizado.xlsx"
+        download_name="stock_actualizado.xls" 
     )
 
 if __name__ == "__main__":
