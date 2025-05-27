@@ -18,7 +18,7 @@ def procesar():
     try:
         files = request.files
         archivo_real = files.get("stock_real")
-        archivo_ecommerce = files.get("stock_ecommerce")
+        archivo_ecommerce = files.get("articulos")
 
         if not archivo_real or not archivo_ecommerce:
             return jsonify({"error": "Faltan archivos"}), 400
