@@ -29,12 +29,16 @@ def procesar():
         stock_real.columns = stock_real.columns.str.strip()
         stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
 
-        stock_real_reducido = stock_real[['Codigo Interno', 'Stock', 'Precio Final']]
+        stock_real_reducido = stock_real[['Codigo Interno', 'Stock', 'Precio Final', 'IVA']]
         stock_real_reducido.rename(columns={
             'Codigo Interno': 'Art.',
             'Stock': 'Stock_nuevo',
-            'Precio Final': '$ web_nuevo'
+            'Precio Final': '$ web_nuevo',
+            'IVA': 'IVA_nuevo'
         }, inplace=True)
+
+        iva_mapping = {1.21: 21, 1.105: 10.5}
+        stock_real_reducido['IVA_nuevo'] = stock_real_reducido['IVA_nuevo'].map(iva_mapping)
 
         merged = pd.merge(
             stock_ecommerce,
@@ -45,17 +49,21 @@ def procesar():
 
         merged['Stock Web_orig'] = merged['Stock Web']
         merged['$ web_orig'] = merged['$ web']
+        merged['IVA_orig'] = merged['IVA']
 
         merged['Stock Web'] = merged['Stock_nuevo'].combine_first(merged['Stock Web'])
         merged['$ web'] = merged['$ web_nuevo'].combine_first(merged['$ web'])
+        merged['IVA'] = merged['IVA_nuevo'].combine_first(merged['IVA'])
 
         modificados = merged[
             (merged['Stock Web'] != merged['Stock Web_orig']) |
-            (merged['$ web'] != merged['$ web_orig'])
+            (merged['$ web'] != merged['$ web_orig']) |
+            (merged['IVA'] != merged['IVA_orig'])
         ].copy()
 
         modificados = modificados.drop(columns=[
-            'Stock_nuevo', '$ web_nuevo', 'Stock Web_orig', '$ web_orig'
+            'Stock_nuevo', '$ web_nuevo', 'IVA_nuevo',
+            'Stock Web_orig', '$ web_orig', 'IVA_orig'
         ])
 
         columnas_finales = [
@@ -80,7 +88,6 @@ def procesar():
                 as_attachment=True,
                 download_name="stock_actualizado.xls"
             )
-
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
