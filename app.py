@@ -67,8 +67,12 @@ def procesar():
 
         resultado = modificados[columnas_finales]
 
+        if 'GTIN' in resultado.columns:
+            resultado['GTIN'] = resultado['GTIN'].astype(str)
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
-            resultado.to_excel(tmp.name, index=False, sheet_name='Actualización', engine='xlwt')
+            with pd.ExcelWriter(tmp.name, engine='xlwt') as writer:
+                resultado.to_excel(writer, index=False, sheet_name='Actualización')
             tmp.seek(0)
             return send_file(
                 tmp.name,
@@ -76,6 +80,7 @@ def procesar():
                 as_attachment=True,
                 download_name="stock_actualizado.xls"
             )
+
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
