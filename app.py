@@ -2,7 +2,6 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import pandas as pd
 import tempfile
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -30,20 +29,24 @@ def procesar():
         stock_real.columns = stock_real.columns.str.strip()
         stock_ecommerce.columns = stock_ecommerce.columns.str.strip()
 
-        stock_real_reducido = stock_real[['Art.', 'Stock Web', '$ web']]
+        stock_real_reducido = stock_real[['Codigo Interno', 'Stock', 'Precio Final']]
+        stock_real_reducido.rename(columns={
+            'Codigo Interno': 'Art.',
+            'Stock': 'Stock_nuevo',
+            'Precio Final': '$ web_nuevo'
+        }, inplace=True)
 
         merged = pd.merge(
             stock_ecommerce,
             stock_real_reducido,
             on='Art.',
-            how='left',
-            suffixes=('', '_nuevo')
+            how='left'
         )
 
         merged['Stock Web_orig'] = merged['Stock Web']
         merged['$ web_orig'] = merged['$ web']
 
-        merged['Stock Web'] = merged['Stock Web_nuevo'].combine_first(merged['Stock Web'])
+        merged['Stock Web'] = merged['Stock_nuevo'].combine_first(merged['Stock Web'])
         merged['$ web'] = merged['$ web_nuevo'].combine_first(merged['$ web'])
 
         modificados = merged[
@@ -52,7 +55,7 @@ def procesar():
         ].copy()
 
         modificados = modificados.drop(columns=[
-            'Stock Web_nuevo', '$ web_nuevo', 'Stock Web_orig', '$ web_orig'
+            'Stock_nuevo', '$ web_nuevo', 'Stock Web_orig', '$ web_orig'
         ])
 
         columnas_finales = [
