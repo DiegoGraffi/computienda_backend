@@ -68,7 +68,7 @@ def procesar():
         resultado = modificados[columnas_finales]
 
         if 'GTIN' in resultado.columns:
-            resultado['GTIN'] = resultado['GTIN'].astype(str)
+            resultado['GTIN'] = resultado['GTIN'].astype(str).fillna('')
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".xls") as tmp:
             with pd.ExcelWriter(tmp.name, engine='xlwt') as writer:
