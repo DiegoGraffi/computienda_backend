@@ -37,8 +37,9 @@ def procesar():
             'IVA': 'IVA_nuevo'
         }, inplace=True)
 
-        iva_mapping = {1.21: 21, 1.105: 10.5}
-        stock_real_reducido['IVA_nuevo'] = stock_real_reducido['IVA_nuevo'].map(iva_mapping)
+        iva_mapping = {'1.21': 21, '1.105': 10.5}
+        stock_real_reducido['IVA_nuevo'] = stock_real_reducido['IVA_nuevo'].astype(str).map(iva_mapping)
+
 
         merged = pd.merge(
             stock_ecommerce,
